@@ -31,8 +31,8 @@ def check_updated(name, updated_params, quant_fn_name):
     if name in updated_params:
         return True
      
-    if quant_fn_name in ['fp8', 'fp8_vllm', 'fp8_vllm_fast', 'fp8_fast']
-            and name.endswith('_scale') 
+    if quant_fn_name in ['fp8', 'fp8_vllm', 'fp8_vllm_fast', 'fp8_fast'] \
+            and name.endswith('weight_scale') \
             and name[:-6] in updated_params:
         return True
     
@@ -169,7 +169,7 @@ def hacked_process_weights_after_loading(
         if hacked_data_dict is not None:
             skipped_params = list()
             for name, p in model.named_parameters():
-                if check_updated(name, updated_params, model.flashrl_quant_fn)
+                if check_updated(name, updated_params, model.flashrl_quant_fn):
                     strided_data = torch.as_strided(p.data, hacked_data_dict[name].shape, hacked_data_dict[name].stride())
                     hacked_data_dict[name].copy_(strided_data)
                 else:
