@@ -108,7 +108,12 @@ def hacked_process_weights_after_loading(
             quant_method = getattr(module, "quant_method", None)
             if isinstance(quant_method, QuantizeMethodBase):
                 
-                if isinstance(quant_method, Fp8LinearMethod) or isinstance(quant_method, CompressedTensorsW8A8Int8):
+                if isinstance(quant_method, Fp8LinearMethod):
+                    # for fast processing, we will do manual processing later
+                    assert not quant_method.use_marlin, 'marlin (w8a16) does not support fp8_fast processing'
+                    continue
+                    
+                if isinstance(quant_method, CompressedTensorsW8A8Int8):
                     # for fast processing, we will do manual processing later
                     continue
                 
