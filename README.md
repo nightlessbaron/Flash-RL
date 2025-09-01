@@ -87,6 +87,13 @@ flashrl setup -m LiyuanLucasLiu/Qwen2.5-32B-quantized.w8a8 -p $HOME/profile.32b.
 flashrl setup -m RedHatAI/Qwen2.5-0.5B-Instruct-quantized.w8a8 -p $HOME/profile.0_5b.pt --fn int8 -o ${CONFIG_PATH:-"$HOME/.flashrl_config.0_5b.yaml"}
 ```
 
+(Optional) to reduce the gap between rollout generation and gradient computation, FlashRL provides the functionality to conduct rollout generation in 16bits and 8bits in a hybrid manner across DP workers. Particularly, running the below command will append a second config to the existing config yaml. 
+
+```bash 
+flashrl setup -a --fn bf16 -o ${CONFIG_PATH:-"$HOME/.flashrl_config.0_5b.yaml"}
+```
+Then, when FlashRL loading the appended the config yaml file, FlashRL will force vllm to conduct bf16 generation in half of DP workers, and 8bit generation in the other half. Futher appending two `bf16` profiles will make the ratio to be bf16 generation in 3/4 of DP workers and 8bit generation in 1/4 of DP workers. 
+
 ### Patcher
 
 Patcher would check the environment variable and operates accordingly. Please find the supported environment variables as below. 
