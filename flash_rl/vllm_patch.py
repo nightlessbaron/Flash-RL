@@ -567,9 +567,15 @@ def patch_vllm_llm():
                 **kwargs
             ) -> None:
                 
-                # Patch the sampler class
-                sampler_patch_status = patch_vllm_logprob_compute()
-                logger.debug(f"Patching vllm Sampler... status: {sampler_patch_status}")
+                if parse(vllm.__version__) >= parse('0.10.1'):
+                    logger.warning(
+                        f'detected vLLM version {vllm.__version__}'
+                        'for vLLM > 0.10.1, `FlashRL` logprob patch has been upstreamed and thus skipped'
+                    )
+                else:
+                    # Patch the sampler class
+                    sampler_patch_status = patch_vllm_logprob_compute()
+                    logger.debug(f"Patching vllm Sampler... status: {sampler_patch_status}")
                 
                 import vllm.envs as envs
                 assert envs.VLLM_USE_V1, 'flash_rl only supports vllm v1 for now'
