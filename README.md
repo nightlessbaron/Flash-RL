@@ -25,7 +25,7 @@
 
 ## ⚡ Quick Start
 
-### Installation
+### Installation (Auto Patch)
 
 ```bash
 pip install flash-llm-rl # need to be installed in all nodes in multi-node training
@@ -35,7 +35,7 @@ pip install flash-llm-rl # need to be installed in all nodes in multi-node train
 
 ### Manual Patch
 When the FlashRL patch conflicts with environments / other setups, an alternative approach is to: 
-1. cleanup FlashRL patch via `flashrl cleanup`;
+1. cleanup FlashRL patch via `flashrl cleanup`, this will disable the auto patch;
 2. manually add `import flash_rl` as in https://github.com/yaof20/verl/pull/1
 
 ### Rollout Generation w. FP8 Quantization
