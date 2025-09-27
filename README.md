@@ -33,6 +33,11 @@ pip install flash-llm-rl # need to be installed in all nodes in multi-node train
 
 (Optional) there are two options to verify the FlashRL install: 1) set `FLASHRL_LOGGING_LEVEL` to `DEBUG` and compare the log with the [provided ones](#examples); 2) for more details / debugging, please follow the [Tutorial](/tutorial/README.md). 
 
+### Manual Patch
+When the FlashRL patch conflicts with environments / other setups, an alternative approach is to: 
+1. cleanup FlashRL patch via `flashrl cleanup`;
+2. manually add `import flash_rl` as in https://github.com/yaof20/verl/pull/1
+
 ### Rollout Generation w. FP8 Quantization
 FlashRL is implemented as a plug-in-and-play manner, using [environment variables](#patcher) `FLASHRL_CONFIG` to control the quantization precision. Note that, due to quantization overhead, it is only recommended to use quantized rollout in the combination of large model (i.e., 14B+, preferrable 32B+) and long cot generation (DAPO training instead of GSM8K training). 
 
