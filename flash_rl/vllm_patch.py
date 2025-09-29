@@ -42,6 +42,7 @@ recorded_loader_keys = [
     'weight_loader',
     'load_qkv_weight',
     'load_row_parallel_weight',
+    'load_column_parallel_weight',
     'load_merged_column_weight',
     'output_dim',
     'input_dim',
