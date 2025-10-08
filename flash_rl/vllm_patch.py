@@ -47,6 +47,8 @@ recorded_loader_keys = [
     'output_dim',
     'input_dim',
     '_assert_and_load',
+    'tp_rank',
+    'tp_size',
 ]
 
 def hacked_process_weights_after_loading(
@@ -710,26 +712,6 @@ def patch_vllm_llm():
                         logger.debug(f"flash_rl load_weights preparation took {end_time - start_time:.2f} seconds")
                         start_time = end_time
                         
-                        # CRITICAL FIX: Ensure all parameters have vLLM-required attributes before weight loading
-                        # This is needed for VLLM version compatibility after parameter manipulation
-                        try:
-                            from vllm.distributed import get_tensor_model_parallel_rank, get_tensor_model_parallel_world_size
-                            tp_rank = get_tensor_model_parallel_rank()
-                            tp_size = get_tensor_model_parallel_world_size()
-                            
-                            params_fixed = 0
-                            for name, param in model.named_parameters():
-                                if not hasattr(param, 'tp_rank'):
-                                    param.tp_rank = tp_rank
-                                    params_fixed += 1
-                                if not hasattr(param, 'tp_size'):
-                                    param.tp_size = tp_size
-                            
-                            if params_fixed > 0:
-                                logger.debug(f"FLASH_RL: Added tp_rank/tp_size attributes to {params_fixed} parameters for VLLM compatibility")
-                        except Exception as e:
-                            logger.warning(f"FLASH_RL: Could not set tp_rank/tp_size attributes: {e}")
-                        
                         updated_params = original_load_weights(
                             flash_quantize_fn(weights, self.flash_rl_profile)
                         )
@@ -763,26 +745,6 @@ def patch_vllm_llm():
                             
                             logger.debug(f"flash_rl load_weights skipped params: {skipped_params}")
                             del skipped_params
-                            
-                        # CRITICAL FIX: Restore tp_rank/tp_size attributes after parameter data manipulation
-                        # Parameter .data replacement can cause loss of VLLM-specific attributes
-                        try:
-                            from vllm.distributed import get_tensor_model_parallel_rank, get_tensor_model_parallel_world_size
-                            tp_rank = get_tensor_model_parallel_rank()
-                            tp_size = get_tensor_model_parallel_world_size()
-                            
-                            params_fixed = 0
-                            for name, param in model.named_parameters():
-                                if not hasattr(param, 'tp_rank'):
-                                    param.tp_rank = tp_rank
-                                    params_fixed += 1
-                                if not hasattr(param, 'tp_size'):
-                                    param.tp_size = tp_size
-                            
-                            if params_fixed > 0:
-                                logger.debug(f"FLASH_RL: Restored tp_rank/tp_size attributes to {params_fixed} parameters after data manipulation")
-                        except Exception as e:
-                            logger.warning(f"FLASH_RL: Could not restore tp_rank/tp_size attributes: {e}")
                             
                         del hacked_data_dict
                         gc.collect()
@@ -844,30 +806,6 @@ def patch_vllm_llm_test_reload():
                         device = torch.cuda.current_device()
                         print(f"FLASH_RL re-loading model {config_i} to device {device}")
                         model = vllm_model_finder(self)
-                        
-                        # CRITICAL FIX: Ensure all parameters have vLLM-required attributes
-                        # In newer PyTorch/vLLM versions, parameters might be regular Parameters instead of BasevLLMParameter
-                        # We need to add the missing attributes that vLLM's weight loaders expect
-                        try:
-                            from vllm.distributed import get_tensor_model_parallel_rank, get_tensor_model_parallel_world_size
-                            tp_rank = get_tensor_model_parallel_rank()
-                            tp_size = get_tensor_model_parallel_world_size()
-                            
-                            # First ensure existing model parameters have the required attributes
-                            params_fixed = 0
-                            for name, param in model.named_parameters():
-                                if not hasattr(param, 'tp_rank'):
-                                    param.tp_rank = tp_rank
-                                    params_fixed += 1
-                                if not hasattr(param, 'tp_size'):
-                                    param.tp_size = tp_size
-                            
-                            if params_fixed > 0:
-                                print(f"FLASH_RL: Added tp_rank/tp_size attributes to {params_fixed} parameters for VLLM compatibility")
-                        except Exception as e:
-                            print(f"FLASH_RL: Warning - Could not set tp_rank/tp_size attributes: {e}")
-                            # Continue anyway, might still work
-                        
                         model.load_weights(
                             ((name, param.to(device)) for name, param in model_to_be_reloaded.named_parameters())
                         )
